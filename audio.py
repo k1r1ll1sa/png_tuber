@@ -1,6 +1,8 @@
+import time
 import pyaudio
 import numpy as np
-from PyQt5.QtCore import QObject, pyqtSignal, QTimer
+import threading
+from PyQt5.QtCore import QObject, pyqtSignal
 
 class Audio(QObject):
     volumeChanged = pyqtSignal(bool)
@@ -8,12 +10,12 @@ class Audio(QObject):
     def __init__(self, volume_threshold=500, check_interval=50):
         super().__init__()
         self.volume_threshold = volume_threshold
-        self.check_interval = check_interval
+        self.check_interval = check_interval / 1000.0
         self.is_speaking = False
         self.audio = None
         self.stream = None
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.check_volume)
+        self.running = False
+        self.thread = None
 
     def start(self):
         try:
@@ -24,12 +26,22 @@ class Audio(QObject):
                 rate=16000,
                 input=True,
                 frames_per_buffer=1024)
-            self.timer.start(self.check_interval)
+
+            self.running = True
+            self.thread = threading.Thread(target=self.monitor_loop, daemon=True)
+            self.thread.start()
         except Exception as e:
             print(f'def start error: {e}')
 
+    def monitor_loop(self):
+        while self.running:
+            self.check_volume()
+            time.sleep(self.check_interval)
+
     def stop(self):
-        self.timer.stop()
+        self.running = False
+        if self.thread:
+            self.thread.join(timeout=1.0)
         if self.stream:
             self.stream.stop_stream()
             self.stream.close()

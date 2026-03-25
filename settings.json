@@ -1,0 +1,12 @@
+{"settings":{
+  "pict_tall_open_eye": "",
+  "pict_tall_close_eye": "",
+  "pict_silens_open_eye": "",
+  "pict_silens_close_eye": "",
+  "volume_threshold": 1000,
+  "shaking": 0,
+  "shaking_threshold": 750,
+  "color_filling": "255, 0, 0",
+  "color_filling_threshold": 750
+  }
+}

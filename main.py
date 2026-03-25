@@ -4,6 +4,6 @@ from main_window import MainWindow
 
 if __name__ == '__main__':
     App = QApplication(sys.argv)
-    window = MainWindow(['комарка_молчит.png', 'комарка_не_молчит.png'])
+    window = MainWindow(['комарка_молчит.png', 'комарка_не_молчит.png', 'комарка_молчит_глаза_закрыты.png', 'комарка_не_молчит_глаза_закрыты.png'])
     window.show()
     sys.exit(App.exec_())
