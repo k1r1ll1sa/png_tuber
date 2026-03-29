@@ -9,5 +9,3 @@ if __name__ == '__main__':
     window = MainWindow(settings)
     window.show()
     sys.exit(App.exec_())
-
-#['комарка_молчит.png', 'комарка_не_молчит.png', 'комарка_молчит_глаза_закрыты.png', 'комарка_не_молчит_глаза_закрыты.png']

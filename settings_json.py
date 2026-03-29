@@ -20,7 +20,7 @@ class Settings:
                 "color_filling": "255, 0, 0",
                 "color_filling_threshold": 750,
                 "blinking": False,
-                "blinking_rate": 2
+                "blinking_rate": 2.0
             }
         }
 

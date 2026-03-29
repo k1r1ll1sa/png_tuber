@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextEdit, QFileDialog, QWidget, \
-    QGroupBox, QLineEdit
+    QGroupBox, QLineEdit, QCheckBox, QSpinBox, QSlider, QFrame
 
 
 class SettingsWindow(QMainWindow):
@@ -8,6 +8,8 @@ class SettingsWindow(QMainWindow):
 
     def __init__(self, settings):
         super().__init__()
+        self.dragging = None
+        self.title_bar_height = 70
         self.settings = settings
         self.initUI()
 
@@ -31,7 +33,7 @@ class SettingsWindow(QMainWindow):
 
         title = QLabel("Настройки")
         title.setStyleSheet("font-size: 18px; font-weight: bold; color: #FFFFFF")
-        title.setAlignment(Qt.AlignCenter)
+        title.setAlignment(Qt.AlignLeft)
         title_bar.addWidget(title, stretch=1)
 
         # Кнопка сворачивания
@@ -73,6 +75,13 @@ class SettingsWindow(QMainWindow):
         title_bar.addWidget(close_btn)
 
         main_layout.addLayout(title_bar)
+
+        separator = QFrame()
+        separator.setFrameShape(QFrame.HLine)
+        separator.setFrameShadow(QFrame.Sunken)
+        separator.setStyleSheet("background-color: #333;")
+        separator.setFixedHeight(2)
+        main_layout.addWidget(separator)
 
         # === Категория: открытые глаза ===
         group_open = QGroupBox("Открытые глаза")
@@ -126,6 +135,30 @@ class SettingsWindow(QMainWindow):
 
         row4 = self.create_image_row("Молчать (закрытые глаза)", "pict_silens_close_eye")
         layout_close.addLayout(row4)
+
+        # === Подкатегория: Моргание ===
+        blink_row = QHBoxLayout()
+
+        self.blink_checkbox = QCheckBox("Включить моргание")
+        self.blink_checkbox.setChecked(self.settings.get("blinking"))
+        blink_row.addWidget(self.blink_checkbox)
+
+        blink_rate_label = QLabel("Частота моргания:")
+        blink_row.addWidget(blink_rate_label)
+
+        self.blink_rate_slider = QSlider(Qt.Horizontal)
+        self.blink_rate_slider.setMinimum(1)
+        self.blink_rate_slider.setMaximum(100)
+        self.blink_rate_slider.setValue(int(self.settings.get("blinking_rate", 2)*10))
+        self.blink_rate_slider.setFixedWidth(200)
+        blink_row.addWidget(self.blink_rate_slider)
+
+        self.blink_rate_value_lable = QLabel(f"{self.settings.get("blinking_rate")}")
+        blink_row.addWidget(self.blink_rate_value_lable)
+
+        self.blink_rate_slider.valueChanged.connect(lambda v: self.blink_rate_value_lable.setText(f"{v/10} сек"))
+
+        layout_close.addLayout(blink_row)
 
         main_layout.addWidget(group_close)
 
@@ -220,15 +253,21 @@ class SettingsWindow(QMainWindow):
                         value = row_layout.text_edit.text().strip()
                         self.settings.set(key, value)
 
+        self.settings.set("blinking", self.blink_checkbox.isChecked())
+        self.settings.set("blinking_rate", self.blink_rate_slider.value()/10)
         self.settings.save()
         self.settingSaved.emit()
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self.drag_start_position = event.globalPos() - self.frameGeometry().topLeft()
-            event.accept()
+            if event.y() < self.title_bar_height:
+                self.dragging = True
+                self.drag_start_position = event.globalPos() - self.frameGeometry().topLeft()
+                event.accept()
+            else:
+                self.dragging = False
 
     def mouseMoveEvent(self, event):
-        if event.buttons() & Qt.LeftButton:
+        if event.buttons() & Qt.LeftButton and self.dragging:
             self.move(event.globalPos() - self.drag_start_position)
             event.accept()

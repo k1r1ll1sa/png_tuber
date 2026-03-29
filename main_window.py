@@ -16,15 +16,17 @@ class MainWindow(QMainWindow):
         self.settings = settings
         self.cur_pict_index = 0
         self.pictures = []
-        self.reload_settings()
+
+        self.blinking = self.settings.get("blinking")
+        self.blinking_rate = self.settings.get("blinking_rate")
+        self.blinking_thread = threading.Thread(target=self.blink_loop, daemon=True)
+        self.blinking_thread.start()
 
         self.audio = Audio(volume_threshold=500, check_interval=50)
         self.audio.volumeChanged.connect(self.on_volume_changed)
 
         self.initUI()
         self.audio.start()
-        self.blinking_thread = threading.Thread(target=self.blink_loop)
-        self.blinking_thread.start()
 
         self.settings_window = SettingsWindow(self.settings)
         self.settings_window.settingSaved.connect(self.reload_settings)
@@ -44,7 +46,7 @@ class MainWindow(QMainWindow):
         self.label.setPixmap(self.pictures[0])
         self.label.setMouseTracking(True)
 
-        self.tip_label = QLabel("Нажмите ЛКМ с зажатым alt\nдля открытия настроек")
+        self.tip_label = QLabel("Нажмите ЛКМ с зажатым alt для открытия настроек,\nили зажатым ctrl для выхода")
         self.tip_label.setFixedSize(350, 30)
         self.tip_label.setStyleSheet("color: white")
         self.tip_label.setAlignment(Qt.AlignCenter)
@@ -57,7 +59,7 @@ class MainWindow(QMainWindow):
 
     def blink_loop(self):
         rand = random.randint(0, 6)
-        if rand == 1:
+        if rand == 1 and self.blinking:
             if self.cur_pict_index == 0:
                 self.label.setPixmap(QPixmap(self.pictures[2]))
             else:
@@ -67,7 +69,7 @@ class MainWindow(QMainWindow):
                 self.label.setPixmap(QPixmap(self.pictures[0]))
             else:
                 self.label.setPixmap(QPixmap(self.pictures[1]))
-        time.sleep(2)
+        time.sleep(self.blinking_rate)
         self.blink_loop()
 
     def mousePressEvent(self, event):
@@ -98,6 +100,9 @@ class MainWindow(QMainWindow):
                     if mouse_event.buttons() == Qt.LeftButton \
                             and mouse_event.modifiers() & Qt.AltModifier:
                                 self.open_settings()
+                    if mouse_event.buttons() == Qt.LeftButton \
+                            and mouse_event.modifiers() & Qt.ControlModifier:
+                                self.close_program()
             if obj == self.label:
                 if event.type() == QEvent.Enter:
                     self.tip_label.show()
@@ -112,6 +117,8 @@ class MainWindow(QMainWindow):
         self.settings_window.show()
 
     def reload_settings(self):
+        self.blinking = self.settings.get("blinking")
+        self.blinking_rate = self.settings.get("blinking_rate")
         new_pictures = [
             self.settings.get("pict_silens_open_eye"),
             self.settings.get("pict_tall_open_eye"),
@@ -120,6 +127,7 @@ class MainWindow(QMainWindow):
         self.pictures = [QPixmap(i if i else "pict_placeholder.png").scaledToWidth(300) for i in new_pictures]
         self.update_picture()
 
-    def closeEvent(self, event):
+    def close_program(self):
         self.audio.stop()
-        event.accept()
+        self.blinking_thread = None
+        self.close()
