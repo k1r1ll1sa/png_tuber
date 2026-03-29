@@ -1,12 +1,15 @@
-{"settings":{
-  "pict_tall_open_eye": "",
-  "pict_tall_close_eye": "",
-  "pict_silens_open_eye": "",
-  "pict_silens_close_eye": "",
-  "volume_threshold": 1000,
-  "shaking": 0,
-  "shaking_threshold": 750,
-  "color_filling": "255, 0, 0",
-  "color_filling_threshold": 750
+{
+  "settings": {
+    "pict_tall_open_eye": "C:/Users/kirillisa/PycharmProjects/PythonProject/png/комарка_не_молчит.png",
+    "pict_tall_close_eye": "комарка_не_молчит_глаза_закрыты.png",
+    "pict_silens_open_eye": "C:/Users/kirillisa/PycharmProjects/PythonProject/png/комарка_молчит.png",
+    "pict_silens_close_eye": "комарка_молчит_глаза_закрыты.png",
+    "volume_threshold": 1000,
+    "shaking": 0,
+    "shaking_threshold": 750,
+    "color_filling": "255, 0, 0",
+    "color_filling_threshold": 750,
+    "blinking": false,
+    "blinking_rate": 2
   }
 }

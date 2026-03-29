@@ -4,19 +4,19 @@ import time
 from PyQt5 import QtCore
 import threading
 from PyQt5.QtCore import Qt, QEvent
-from PyQt5.QtGui import QPixmap, QMouseEvent
+from PyQt5.QtGui import QPixmap, QMouseEvent, QKeyEvent
 from PyQt5.QtWidgets import QMainWindow, QWidget, QLabel, QVBoxLayout
 from audio import Audio
+from settings_window import SettingsWindow
+from settings_json import Settings
 
 class MainWindow(QMainWindow):
-    def __init__(self, pictures):
+    def __init__(self, settings):
         super().__init__()
-        self.pictures = pictures
+        self.settings = settings
         self.cur_pict_index = 0
-        self.pixmap_tall = QPixmap('pict_placeholder.png').scaledToWidth(300)
-        self.pixmap_silence = QPixmap('pict_placeholder.png').scaledToWidth(300)
-        self.pixmap_tall_close_eyes = QPixmap('pict_placeholder.png').scaledToWidth(300)
-        self.pixmap_silence_close_eyes = QPixmap('pict_placeholder.png').scaledToWidth(300)
+        self.pictures = []
+        self.reload_settings()
 
         self.audio = Audio(volume_threshold=500, check_interval=50)
         self.audio.volumeChanged.connect(self.on_volume_changed)
@@ -26,9 +26,12 @@ class MainWindow(QMainWindow):
         self.blinking_thread = threading.Thread(target=self.blink_loop)
         self.blinking_thread.start()
 
+        self.settings_window = SettingsWindow(self.settings)
+        self.settings_window.settingSaved.connect(self.reload_settings)
+
     def initUI(self):
         self.setWindowTitle('PngTuber')
-        self.setFixedSize(350, 350)
+        self.setFixedSize(350, 380)
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
 
@@ -37,21 +40,24 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(0, 20, 0, 0)
 
         self.label = QLabel()
-        if len(self.pictures) != 0:
-            self.pictures = [QPixmap(self.pictures[0]).scaledToWidth(300),
-                             QPixmap(self.pictures[1]).scaledToWidth(300),
-                             QPixmap(self.pictures[2]).scaledToWidth(300),
-                             QPixmap(self.pictures[3]).scaledToWidth(300)]
+        self.reload_settings()
         self.label.setPixmap(self.pictures[0])
         self.label.setMouseTracking(True)
 
+        self.tip_label = QLabel("Нажмите ЛКМ с зажатым alt\nдля открытия настроек")
+        self.tip_label.setFixedSize(350, 30)
+        self.tip_label.setStyleSheet("color: white")
+        self.tip_label.setAlignment(Qt.AlignCenter)
+        self.tip_label.hide()
+
         layout.addWidget(self.label, alignment=Qt.AlignCenter | Qt.AlignTop)
+        layout.addWidget(self.tip_label, alignment=Qt.AlignCenter | Qt.AlignBottom)
         self.setCentralWidget(central_widget)
         self.label.installEventFilter(self)
 
     def blink_loop(self):
-        rand = random.randint(0, 100)
-        if rand >= 60:
+        rand = random.randint(0, 6)
+        if rand == 1:
             if self.cur_pict_index == 0:
                 self.label.setPixmap(QPixmap(self.pictures[2]))
             else:
@@ -89,14 +95,33 @@ class MainWindow(QMainWindow):
             if obj == self.label:
                 if event.type() == QEvent.MouseButtonPress:
                     mouse_event = QMouseEvent(event)
-                    if mouse_event.buttons() == Qt.LeftButton:
-                        self.on_label_clicked()
+                    if mouse_event.buttons() == Qt.LeftButton \
+                            and mouse_event.modifiers() & Qt.AltModifier:
+                                self.open_settings()
+            if obj == self.label:
+                if event.type() == QEvent.Enter:
+                    self.tip_label.show()
+            if obj == self.label:
+                if event.type() == QEvent.Leave:
+                    self.tip_label.hide()
             return False
         except Exception as e:
             print(e)
 
-    def on_label_clicked(self):
-        print('clicked')
+    def open_settings(self):
+        self.settings_window.show()
+
+    def reload_settings(self):
+        try:
+            new_pictures = [
+                self.settings.get("pict_silens_open_eye"),
+                self.settings.get("pict_tall_open_eye"),
+                self.settings.get("pict_silens_close_eye"),
+                self.settings.get("pict_tall_close_eye")]
+            self.pictures = [QPixmap(i).scaledToWidth(300) for i in new_pictures]
+            self.update_picture()
+        except Exception as e:
+            print(f"reload_settings: {e}")
 
     def closeEvent(self, event):
         self.audio.stop()
