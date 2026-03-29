@@ -29,7 +29,7 @@ class SettingsWindow(QMainWindow):
         title_bar = QHBoxLayout()
         title_bar.setSpacing(10)
 
-        title = QLabel("Настройки изображений")
+        title = QLabel("Настройки")
         title.setStyleSheet("font-size: 18px; font-weight: bold; color: #FFFFFF")
         title.setAlignment(Qt.AlignCenter)
         title_bar.addWidget(title, stretch=1)

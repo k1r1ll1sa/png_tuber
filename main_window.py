@@ -112,18 +112,14 @@ class MainWindow(QMainWindow):
         self.settings_window.show()
 
     def reload_settings(self):
-        try:
-            new_pictures = [
-                self.settings.get("pict_silens_open_eye"),
-                self.settings.get("pict_tall_open_eye"),
-                self.settings.get("pict_silens_close_eye"),
-                self.settings.get("pict_tall_close_eye")]
-            self.pictures = [QPixmap(i).scaledToWidth(300) for i in new_pictures]
-            self.update_picture()
-        except Exception as e:
-            print(f"reload_settings: {e}")
+        new_pictures = [
+            self.settings.get("pict_silens_open_eye"),
+            self.settings.get("pict_tall_open_eye"),
+            self.settings.get("pict_silens_close_eye"),
+            self.settings.get("pict_tall_close_eye")]
+        self.pictures = [QPixmap(i if i else "pict_placeholder.png").scaledToWidth(300) for i in new_pictures]
+        self.update_picture()
 
     def closeEvent(self, event):
         self.audio.stop()
         event.accept()
-
