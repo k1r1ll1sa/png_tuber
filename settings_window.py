@@ -153,7 +153,7 @@ class SettingsWindow(QMainWindow):
         self.blink_rate_slider.setFixedWidth(200)
         blink_row.addWidget(self.blink_rate_slider)
 
-        self.blink_rate_value_lable = QLabel(f"{self.settings.get("blinking_rate")}")
+        self.blink_rate_value_lable = QLabel(f"{self.settings.get("blinking_rate")} сек")
         blink_row.addWidget(self.blink_rate_value_lable)
 
         self.blink_rate_slider.valueChanged.connect(lambda v: self.blink_rate_value_lable.setText(f"{v/10} сек"))
@@ -161,6 +161,74 @@ class SettingsWindow(QMainWindow):
         layout_close.addLayout(blink_row)
 
         main_layout.addWidget(group_close)
+
+        # === Категория: тряска ===
+
+        group_shake = QGroupBox("Тряска")
+        group_shake.setStyleSheet("""
+                    QGroupBox { 
+                        border: 1px solid #333; 
+                        border-radius: 5px; 
+                        margin-top: 10px; 
+                        padding-top: 10px; 
+                        font-weight: bold
+                    }
+                    QGroupBox::title {
+                        subcontrol-origin: margin;
+                        subcontrol-position: top left;
+                        left: 10px;
+                    }
+                """)
+        layout_shake = QVBoxLayout(group_shake)
+        shake_row = QHBoxLayout()
+
+        self.shake_checkbox = QCheckBox("Включить тряску")
+        self.shake_checkbox.setChecked(self.settings.get("shaking"))
+        shake_row.addWidget(self.shake_checkbox)
+
+        shake_intensity_label = QLabel("Сила тряски:")
+        shake_row.addWidget(shake_intensity_label)
+
+        self.shake_intensity_slider = QSlider(Qt.Horizontal)
+        self.shake_intensity_slider.setMinimum(1)
+        self.shake_intensity_slider.setMaximum(10)
+        self.shake_intensity_slider.setValue(int(self.settings.get("shaking_intensity", 5)))
+        self.shake_intensity_slider.setFixedWidth(200)
+        shake_row.addWidget(self.shake_intensity_slider)
+
+        self.shake_intensity_value_lable = QLabel(f"{self.settings.get("shaking_intensity")}")
+        shake_row.addWidget(self.shake_intensity_value_lable)
+
+        self.shake_intensity_slider.valueChanged.connect(lambda v: self.shake_intensity_value_lable.setText(f"{v}"))
+
+        layout_shake.addLayout(shake_row)
+
+        threshold_row = QHBoxLayout()
+
+        filler = QWidget()
+        filler.setFixedWidth(170)
+        threshold_row.addWidget(filler)
+
+        threshold_label = QLabel("Порог громкости:")
+        threshold_row.addWidget(threshold_label)
+
+        self.shake_threshold_slider = QSlider(Qt.Horizontal)
+        self.shake_threshold_slider.setMinimum(1)
+        self.shake_threshold_slider.setMaximum(5000)
+        self.shake_threshold_slider.setValue(int(self.settings.get("shaking_threshold", 2000)))
+        self.shake_threshold_slider.setFixedWidth(200)
+        threshold_row.addWidget(self.shake_threshold_slider)
+
+        self.shake_threshold_value_label = QLabel(str(self.settings.get("shaking_threshold", 2000)))
+        threshold_row.addWidget(self.shake_threshold_value_label)
+
+        self.shake_threshold_slider.valueChanged.connect(lambda v: self.shake_threshold_value_label.setText(str(v)))
+
+        layout_shake.addLayout(threshold_row)
+
+        main_layout.addWidget(group_shake)
+
+        # === Кнопка сохранения ===
 
         save_btn = QPushButton("Сохранить настройки")
         save_btn.setStyleSheet("""
@@ -255,6 +323,11 @@ class SettingsWindow(QMainWindow):
 
         self.settings.set("blinking", self.blink_checkbox.isChecked())
         self.settings.set("blinking_rate", self.blink_rate_slider.value()/10)
+
+        self.settings.set("shaking", self.shake_checkbox.isChecked())
+        self.settings.set("shaking_intensity", self.shake_intensity_slider.value())
+        self.settings.set("shaking_threshold", self.shake_threshold_slider.value())
+
         self.settings.save()
         self.settingSaved.emit()
 

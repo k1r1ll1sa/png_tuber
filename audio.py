@@ -6,12 +6,19 @@ from PyQt5.QtCore import QObject, pyqtSignal
 
 class Audio(QObject):
     volumeChanged = pyqtSignal(bool)
+    highVolume = pyqtSignal(bool)
 
-    def __init__(self, volume_threshold=500, check_interval=50):
+    def __init__(self, settings):
         super().__init__()
-        self.volume_threshold = volume_threshold
-        self.check_interval = check_interval / 1000.0
+        self.settings = settings
+        self.check_interval = 50.0 / 1000.0
         self.is_speaking = False
+
+        self.shake_threshold = 1500
+        self.volume_threshold = 750
+        self.is_high_volume = False
+        self.update_threshold()
+
         self.audio = None
         self.stream = None
         self.running = False
@@ -53,13 +60,19 @@ class Audio(QObject):
             data = np.frombuffer(self.stream.read(1024), dtype=np.int16)
             volume = np.abs(data).mean()
             is_speaking_now = volume > self.volume_threshold
+            is_cur_high = volume > self.shake_threshold
 
             if bool(is_speaking_now) != self.is_speaking:
                 self.is_speaking = bool(is_speaking_now)
                 self.volumeChanged.emit(self.is_speaking)
 
+            if bool(is_cur_high) != self.is_high_volume:
+                self.is_high_volume = bool(is_cur_high)
+                self.highVolume.emit(bool(is_cur_high))
+
         except Exception as e:
             print(f'def check_volume error: {e}')
 
-    def set_threshold(self, threshold):
-        self.volume_threshold = threshold
+    def update_threshold(self):
+        self.volume_threshold = self.settings.get("volume_threshold")
+        self.shake_threshold = self.settings.get("shaking_threshold")
