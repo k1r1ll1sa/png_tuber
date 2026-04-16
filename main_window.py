@@ -48,7 +48,7 @@ class MainWindow(QMainWindow):
         self.label.setPixmap(self.pictures[0])
         self.label.setMouseTracking(True)
 
-        self.tip_label = QLabel("Нажмите ЛКМ с зажатым alt для открытия настроек,"
+        self.tip_label = QLabel("Нажмите ЛКМ с зажатым shift для открытия настроек,"
                                 "\nили зажатым ctrl для выхода")
         self.tip_label.setFixedSize(350, 30)
         self.tip_label.setStyleSheet("color: white")
@@ -98,25 +98,22 @@ class MainWindow(QMainWindow):
             self.label.setPixmap(QPixmap(self.pictures[1]))
 
     def eventFilter(self, obj, event):
-        try:
-            if obj == self.label:
-                if event.type() == QEvent.MouseButtonPress:
-                    mouse_event = QMouseEvent(event)
-                    if mouse_event.buttons() == Qt.LeftButton \
-                            and mouse_event.modifiers() & Qt.AltModifier:
-                                self.open_settings()
-                    if mouse_event.buttons() == Qt.LeftButton \
-                            and mouse_event.modifiers() & Qt.ControlModifier:
-                                self.close_program()
-            if obj == self.label:
-                if event.type() == QEvent.Enter:
-                    self.tip_label.show()
-            if obj == self.label:
-                if event.type() == QEvent.Leave:
-                    self.tip_label.hide()
-            return False
-        except Exception as e:
-            print(e)
+        if obj is self.label:
+            if event.type() == QEvent.MouseButtonPress:
+                if event.button() == Qt.LeftButton:
+                    if event.modifiers() & Qt.ShiftModifier:
+                        self.open_settings()
+                        return True
+                    if event.modifiers() & Qt.ControlModifier:
+                        self.close_program()
+                        return True
+
+            elif event.type() == QEvent.Enter:
+                self.tip_label.show()
+            elif event.type() == QEvent.Leave:
+                self.tip_label.hide()
+
+        return super().eventFilter(obj, event)
 
     def open_settings(self):
         self.settings_window.show()
